@@ -1,0 +1,102 @@
+[
+  {
+    "id": "ORD-101",
+    "customer": "Taj Mahal Palace Logistics",
+    "pickup": "DEPOT_BKC",
+    "dropoff": "GATEWAY",
+    "weight_kg": 15,
+    "priority": "URGENT",
+    "deadline_mins": 45,
+    "description": "Critical event supplies"
+  },
+  {
+    "id": "ORD-102",
+    "customer": "High Street Retailer",
+    "pickup": "DEPOT_BKC",
+    "dropoff": "LOWER_PAREL",
+    "weight_kg": 25,
+    "priority": "HIGH",
+    "deadline_mins": 60,
+    "description": "Apparel restocking"
+  },
+  {
+    "id": "ORD-103",
+    "customer": "Colaba Medical Clinic",
+    "pickup": "DEPOT_DADAR",
+    "dropoff": "COLABA",
+    "weight_kg": 8,
+    "priority": "URGENT",
+    "deadline_mins": 35,
+    "description": "Emergency pharmaceuticals"
+  },
+  {
+    "id": "ORD-104",
+    "customer": "Bandra Boutique",
+    "pickup": "DEPOT_BKC",
+    "dropoff": "BANDRA_W",
+    "weight_kg": 12,
+    "priority": "NORMAL",
+    "deadline_mins": 120,
+    "description": "Consumer electronics delivery"
+  },
+  {
+    "id": "ORD-105",
+    "customer": "Nariman Pt Investment Corp",
+    "pickup": "DEPOT_DADAR",
+    "dropoff": "NARIMAN_PT",
+    "weight_kg": 18,
+    "priority": "HIGH",
+    "deadline_mins": 55,
+    "description": "Confidential legal documents"
+  },
+  {
+    "id": "ORD-106",
+    "customer": "Worli Corporate Tower",
+    "pickup": "DEPOT_BKC",
+    "dropoff": "WORLI",
+    "weight_kg": 30,
+    "priority": "NORMAL",
+    "deadline_mins": 90,
+    "description": "Server hardware shipment"
+  },
+  {
+    "id": "ORD-107",
+    "customer": "Fort Art Gallery",
+    "pickup": "DEPOT_DADAR",
+    "dropoff": "FORT",
+    "weight_kg": 14,
+    "priority": "NORMAL",
+    "deadline_mins": 110,
+    "description": "Fragile art exhibition prints"
+  },
+  {
+    "id": "ORD-108",
+    "customer": "Girgaon Residents Society",
+    "pickup": "DEPOT_DADAR",
+    "dropoff": "GIRGAON",
+    "weight_kg": 22,
+    "priority": "NORMAL",
+    "deadline_mins": 100,
+    "description": "Monthly subscription parcels"
+  },
+  {
+    "id": "ORD-109",
+    "customer": "Mahalaxmi Club",
+    "pickup": "DEPOT_DADAR",
+    "dropoff": "MAHALAXMI",
+    "weight_kg": 10,
+    "priority": "HIGH",
+    "deadline_mins": 50,
+    "description": "VIP catering equipment"
+  },
+  {
+    "id": "ORD-110",
+    "customer": "Shivaji Park Sports Academy",
+    "pickup": "DEPOT_BKC",
+    "dropoff": "SHIVAJI_PARK",
+    "weight_kg": 16,
+    "priority": "NORMAL",
+    "deadline_mins": 130,
+    "description": "Sports gear & uniforms"
+  }
+]

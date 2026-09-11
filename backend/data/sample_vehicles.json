@@ -1,0 +1,42 @@
+[
+  {
+    "id": "VEH-1",
+    "name": "E-Cargo Van Alpha",
+    "type": "van",
+    "base_node": "DEPOT_BKC",
+    "capacity_kg": 65,
+    "speed_kmh": 42,
+    "color": "#00f0ff",
+    "icon": "truck"
+  },
+  {
+    "id": "VEH-2",
+    "name": "E-Cargo Van Beta",
+    "type": "van",
+    "base_node": "DEPOT_DADAR",
+    "capacity_kg": 75,
+    "speed_kmh": 40,
+    "color": "#ffaa00",
+    "icon": "truck"
+  },
+  {
+    "id": "VEH-3",
+    "name": "Hyper-Express Bike 1",
+    "type": "bike",
+    "base_node": "DEPOT_BKC",
+    "capacity_kg": 30,
+    "speed_kmh": 50,
+    "color": "#a855f7",
+    "icon": "motorcycle"
+  },
+  {
+    "id": "VEH-4",
+    "name": "Hyper-Express Bike 2",
+    "type": "bike",
+    "base_node": "DEPOT_DADAR",
+    "capacity_kg": 35,
+    "speed_kmh": 48,
+    "color": "#22c55e",
+    "icon": "motorcycle"
+  }
+]

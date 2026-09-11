@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intelligent Route & Delivery Optimization System | Mumbai Urban Logistics</title>
+  <meta name="description" content="AI-powered multi-vehicle route optimization and dispatch system utilizing Dijkstra, A*, and 2-Opt VRP algorithms with live interactive simulation.">
+
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-icon">
+          <i class="fa-solid fa-route"></i>
+        </div>
+        <div class="logo-text">
+          <h1>RouteOpt<span>.AI</span></h1>
+          <p class="subtitle">Intelligent Urban Delivery Optimization • Mumbai Network</p>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="status-pill online">
+          <span class="pulse-dot"></span>
+          <span id="system-status-text">Engine Ready • 23 Hubs Online</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button id="btn-run-optimization" class="btn btn-primary glow-btn">
+          <i class="fa-solid fa-bolt"></i> Run Optimization
+        </button>
+        <button id="btn-open-viva-modal" class="btn btn-secondary">
+          <i class="fa-solid fa-graduation-cap"></i> DSA Viva Docs
+        </button>
+        <button id="btn-reset-data" class="btn btn-ghost" title="Reset to default sample data">
+          <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+        </button>
+      </div>
+    </header>
+
+    <!-- Real-time KPI Comparison Bar -->
+    <section class="kpi-bar">
+      <div class="kpi-card highlight-cyan">
+        <div class="kpi-icon"><i class="fa-solid fa-road"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label">Optimized Fleet Distance</div>
+          <div class="kpi-value"><span id="kpi-opt-distance">--</span> <small>km</small></div>
+          <div class="kpi-badge positive" id="kpi-dist-saved-badge"><i class="fa-solid fa-arrow-down"></i> <span id="kpi-dist-saved-pct">--</span>% vs Naive</div>
+        </div>
+      </div>
+
+      <div class="kpi-card highlight-purple">
+        <div class="kpi-icon"><i class="fa-solid fa-stopwatch"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label">Estimated Transit Time</div>
+          <div class="kpi-value"><span id="kpi-opt-time">--</span> <small>mins</small></div>
+          <div class="kpi-subtext">Naive baseline: <span id="kpi-naive-time">--</span> mins</div>
+        </div>
+      </div>
+
+      <div class="kpi-card highlight-emerald">
+        <div class="kpi-icon"><i class="fa-solid fa-leaf"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label">CO₂ Footprint Avoided</div>
+          <div class="kpi-value"><span id="kpi-co2-saved">--</span> <small>kg</small></div>
+          <div class="kpi-subtext"><span id="kpi-fuel-saved">--</span> L fuel saved</div>
+        </div>
+      </div>
+
+      <div class="kpi-card highlight-amber">
+        <div class="kpi-icon"><i class="fa-solid fa-box-open"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label">Orders Dispatched</div>
+          <div class="kpi-value"><span id="kpi-orders-dispatched">--</span> / <span id="kpi-orders-total">--</span></div>
+          <div class="kpi-subtext"><span id="kpi-active-vehicles">--</span> active vehicles</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Workspace -->
+    <main class="main-layout">
+
+      <!-- Left Sidebar Tabs & Control Center -->
+      <aside class="sidebar-panel">
+        <nav class="sidebar-tabs">
+          <button class="tab-btn active" data-tab="tab-fleet">
+            <i class="fa-solid fa-truck-fast"></i> Fleet & Routes
+          </button>
+          <button class="tab-btn" data-tab="tab-orders">
+            <i class="fa-solid fa-clipboard-list"></i> Orders (<span id="orders-count-tab">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="tab-lab">
+            <i class="fa-solid fa-flask"></i> A* vs Dijkstra
+          </button>
+        </nav>
+
+        <!-- Tab 1: Fleet & Routes -->
+        <div id="tab-fleet" class="tab-pane active">
+          <div class="panel-header-actions">
+            <h3>Vehicle Fleet Status</h3>
+            <button id="btn-add-vehicle" class="btn btn-xs btn-outline"><i class="fa-solid fa-plus"></i> Add Vehicle</button>
+          </div>
+
+          <!-- Simulation Controller Widget -->
+          <div class="simulation-widget">
+            <div class="sim-header">
+              <span><i class="fa-solid fa-gamepad"></i> Route Simulation</span>
+              <span id="sim-time-display" class="badge badge-neutral">00:00</span>
+            </div>
+            <div class="sim-controls">
+              <button id="btn-sim-play" class="btn-icon" title="Play / Resume"><i class="fa-solid fa-play"></i></button>
+              <button id="btn-sim-pause" class="btn-icon" title="Pause"><i class="fa-solid fa-pause"></i></button>
+              <button id="btn-sim-reset" class="btn-icon" title="Reset"><i class="fa-solid fa-rotate-left"></i></button>
+              <div class="speed-toggle">
+                <button class="speed-btn active" data-speed="1">1x</button>
+                <button class="speed-btn" data-speed="3">3x</button>
+                <button class="speed-btn" data-speed="6">6x</button>
+              </div>
+            </div>
+            <div class="progress-bar-container">
+              <div id="sim-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Vehicle List Container -->
+          <div id="vehicles-list" class="vehicles-scroll-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Orders & Dispatch -->
+        <div id="tab-orders" class="tab-pane">
+          <div class="panel-header-actions">
+            <h3>Delivery Requests</h3>
+            <button id="btn-open-add-order" class="btn btn-xs btn-primary"><i class="fa-solid fa-plus"></i> New Order</button>
+          </div>
+
+          <!-- Filter & Search -->
+          <div class="filter-row">
+            <select id="order-priority-filter" class="form-input-sm">
+              <option value="ALL">All Priorities</option>
+              <option value="URGENT">Urgent Only</option>
+              <option value="HIGH">High Priority</option>
+              <option value="NORMAL">Normal</option>
+            </select>
+            <select id="order-status-filter" class="form-input-sm">
+              <option value="ALL">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="IN_TRANSIT">In Transit</option>
+              <option value="DELIVERED">Delivered</option>
+            </select>
+          </div>
+
+          <!-- Orders List Container -->
+          <div id="orders-list" class="orders-scroll-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Tab 3: Dijkstra vs A* Interactive Lab -->
+        <div id="tab-lab" class="tab-pane">
+          <div class="lab-card">
+            <h3><i class="fa-solid fa-diagram-project"></i> Pathfinding Benchmark</h3>
+            <p class="text-muted">Compare uninformed <strong>Dijkstra's Algorithm</strong> against informed <strong>A* Search with Haversine Heuristic</strong> between any two junctions.</p>
+
+            <form id="pathfind-form" class="form-vertical">
+              <div class="form-group">
+                <label for="lab-start-node">Start Junction (Source):</label>
+                <select id="lab-start-node" class="form-input" required></select>
+              </div>
+
+              <div class="form-group">
+                <label for="lab-goal-node">Goal Junction (Destination):</label>
+                <select id="lab-goal-node" class="form-input" required></select>
+              </div>
+
+              <div class="form-group">
+                <label>Optimization Objective:</label>
+                <div class="radio-group">
+                  <label class="radio-pill">
+                    <input type="radio" name="lab-metric" value="time" checked>
+                    <span>Travel Time (Traffic-Aware)</span>
+                  </label>
+                  <label class="radio-pill">
+                    <input type="radio" name="lab-metric" value="distance">
+                    <span>Physical Distance (km)</span>
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa-solid fa-play"></i> Run Point-to-Point Benchmark
+              </button>
+            </form>
+
+            <div id="lab-results" class="lab-results-card" style="display: none;">
+              <h4>Benchmark Results</h4>
+              <div class="results-grid">
+                <div class="res-col dijkstra-col">
+                  <h5>Dijkstra's Algorithm</h5>
+                  <div class="stat-line"><span>Explored Nodes:</span> <strong id="res-dijk-nodes">--</strong></div>
+                  <div class="stat-line"><span>Total Cost:</span> <strong id="res-dijk-cost">--</strong></div>
+                  <div class="stat-line"><span>Compute Time:</span> <strong id="res-dijk-time">--</strong></div>
+                </div>
+
+                <div class="res-col astar-col">
+                  <h5>A* Search (Haversine)</h5>
+                  <div class="stat-line"><span>Explored Nodes:</span> <strong id="res-astar-nodes" class="text-cyan">--</strong></div>
+                  <div class="stat-line"><span>Total Cost:</span> <strong id="res-astar-cost">--</strong></div>
+                  <div class="stat-line"><span>Compute Time:</span> <strong id="res-astar-time">--</strong></div>
+                </div>
+              </div>
+
+              <div class="efficiency-badge" id="res-efficiency-banner">
+                <i class="fa-solid fa-shield-halved"></i> A* reduced node exploration space by <span id="res-nodes-saved-pct">0</span>%!
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Map Display Canvas -->
+      <section class="map-section">
+        <div id="map" class="map-container"></div>
+
+        <!-- Floating Map Legend & Toggles -->
+        <div class="map-floating-overlay">
+          <div class="legend-card">
+            <h4>Map Legend</h4>
+            <div class="legend-item"><span class="legend-marker depot-legend"></span> Depot / Logistics Base</div>
+            <div class="legend-item"><span class="legend-marker pickup-legend"></span> Pickup Node</div>
+            <div class="legend-item"><span class="legend-marker dropoff-legend"></span> Customer Dropoff</div>
+            <div class="legend-item"><span class="legend-line clear-traffic"></span> Normal Traffic (Factor 1.0)</div>
+            <div class="legend-item"><span class="legend-line heavy-traffic"></span> Congested Corridor (1.4x)</div>
+          </div>
+
+          <div class="map-toggles">
+            <button id="toggle-network-edges" class="btn btn-xs btn-dark active" title="Toggle Road Network Lines">
+              <i class="fa-solid fa-network-wired"></i> Network
+            </button>
+            <button id="toggle-labels" class="btn btn-xs btn-dark active" title="Toggle Node Labels">
+              <i class="fa-solid fa-tags"></i> Labels
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Modal: Add New Order -->
+    <div id="modal-add-order" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-cart-plus"></i> Create Delivery Request</h3>
+          <button class="modal-close" data-close="modal-add-order">&times;</button>
+        </div>
+        <form id="form-add-order" class="modal-body">
+          <div class="form-group">
+            <label>Customer Name / Business:</label>
+            <input type="text" id="new-order-customer" class="form-input" placeholder="e.g. Bandra Tech Hub" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Pickup Location:</label>
+              <select id="new-order-pickup" class="form-input" required></select>
+            </div>
+            <div class="form-group">
+              <label>Dropoff Location:</label>
+              <select id="new-order-dropoff" class="form-input" required></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Weight (kg):</label>
+              <input type="number" id="new-order-weight" class="form-input" min="1" max="60" value="12" required>
+            </div>
+            <div class="form-group">
+              <label>Priority Tier:</label>
+              <select id="new-order-priority" class="form-input">
+                <option value="NORMAL">Normal Delivery</option>
+                <option value="HIGH">High Priority</option>
+                <option value="URGENT">Urgent (Express)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Deadline (minutes):</label>
+            <input type="number" id="new-order-deadline" class="form-input" min="15" max="360" value="90">
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-close="modal-add-order">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Register Order</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Add Vehicle -->
+    <div id="modal-add-vehicle" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-truck-medical"></i> Add Fleet Vehicle</h3>
+          <button class="modal-close" data-close="modal-add-vehicle">&times;</button>
+        </div>
+        <form id="form-add-vehicle" class="modal-body">
+          <div class="form-group">
+            <label>Vehicle Name / Designation:</label>
+            <input type="text" id="new-veh-name" class="form-input" placeholder="e.g. E-Van Gamma" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Vehicle Type:</label>
+              <select id="new-veh-type" class="form-input">
+                <option value="van">Electric Cargo Van</option>
+                <option value="bike">Express Delivery Bike</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Home Depot:</label>
+              <select id="new-veh-base" class="form-input" required></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Max Payload Capacity (kg):</label>
+              <input type="number" id="new-veh-capacity" class="form-input" min="10" max="200" value="60" required>
+            </div>
+            <div class="form-group">
+              <label>Cruising Speed (km/h):</label>
+              <input type="number" id="new-veh-speed" class="form-input" min="20" max="80" value="45" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Theme Color:</label>
+            <input type="color" id="new-veh-color" class="form-input color-picker" value="#ec4899">
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-close="modal-add-vehicle">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Deploy Vehicle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: DSA Viva & Technical Cheat Sheet -->
+    <div id="modal-viva" class="modal-backdrop">
+      <div class="modal-card modal-lg">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-graduation-cap"></i> Data Structures & Algorithms (DSA) Viva Guide</h3>
+          <button class="modal-close" data-close="modal-viva">&times;</button>
+        </div>
+        <div class="modal-body viva-content-scroll">
+          <div class="viva-section">
+            <h4>1. Problem Formalization: Capacitated VRP with Precedence (PD-VRP)</h4>
+            <p>The system addresses the <strong>Vehicle Routing Problem with Pickups and Deliveries (VRPPD)</strong>. A set of delivery orders $O = \{o_1, o_2, \dots, o_m\}$ must be assigned to fleet vehicles $V = \{v_1, \dots, v_k\}$ such that:</p>
+            <ul>
+              <li><strong>Precedence Constraint</strong>: For every order $o_i$, the pickup node must strictly precede the dropoff node in the vehicle's sequence: $\text{pos}(\text{pickup}_i) < \text{pos}(\text{dropoff}_i)$.</li>
+              <li><strong>Capacity Constraint</strong>: The instantaneous payload at any point in the route never exceeds the vehicle capacity: $L(t) \le C_v$.</li>
+              <li><strong>Priority Scheduling</strong>: Urgent orders are served with prioritized distance weighting in tour construction.</li>
+              <li><strong>VRP Complexity</strong>: VRP is known to be <strong>NP-Hard</strong> (generalization of the Traveling Salesperson Problem). Exact algorithms have $O(n!)$ factorial complexity, requiring polynomial-time heuristics (Nearest Neighbor + 2-Opt) for practical urban routing.</li>
+            </ul>
+          </div>
+
+          <div class="viva-section">
+            <h4>2. Graph Representation & Data Structures</h4>
+            <table class="viva-table">
+              <thead>
+                <tr>
+                  <th>Data Structure</th>
+                  <th>Implementation</th>
+                  <th>Space Complexity</th>
+                  <th>Access Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Road Network</strong></td>
+                  <td>Adjacency List (Node ID &rarr; List of Adjacent Edges)</td>
+                  <td>$O(V + E)$</td>
+                  <td>$O(1)$ neighbor lookup</td>
+                </tr>
+                <tr>
+                  <td><strong>Min-Heap Priority Queue</strong></td>
+                  <td>Binary Heap via Python <code>heapq</code></td>
+                  <td>$O(V)$</td>
+                  <td>$O(\log V)$ extract-min & push</td>
+                </tr>
+                <tr>
+                  <td><strong>Visited Set & Distances</strong></td>
+                  <td>Hash Map / Hash Set</td>
+                  <td>$O(V)$</td>
+                  <td>$O(1)$ amortized lookup</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="viva-section">
+            <h4>3. Dijkstra's Algorithm vs A* Search Comparison</h4>
+            <table class="viva-table">
+              <thead>
+                <tr>
+                  <th>Attribute</th>
+                  <th>Dijkstra's Algorithm</th>
+                  <th>A* Search</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Evaluation Function</strong></td>
+                  <td>$f(n) = g(n)$ (cost from start)</td>
+                  <td>$f(n) = g(n) + h(n)$ (cost + heuristic)</td>
+                </tr>
+                <tr>
+                  <td><strong>Heuristic $h(n)$</strong></td>
+                  <td>None (uninformed blind radial search)</td>
+                  <td>Haversine great-circle distance (admissible & consistent)</td>
+                </tr>
+                <tr>
+                  <td><strong>Time Complexity</strong></td>
+                  <td>$O((V + E) \log V)$</td>
+                  <td>$O((V + E) \log V)$ worst case, orders of magnitude fewer visited nodes in practice</td>
+                </tr>
+                <tr>
+                  <td><strong>Admissibility Guarantee</strong></td>
+                  <td>Always finds optimal shortest path</td>
+                  <td>Guaranteed optimal because $h(n) \le h^*(n)$ (straight-line distance is always $\le$ actual road distance)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="viva-section">
+            <h4>4. Heuristic Optimization: 2-Opt Local Search</h4>
+            <p>2-Opt is a local search algorithm that iteratively tests exchanging pairs of edges $(u_i, u_{i+1})$ and $(u_j, u_{j+1})$ with $(u_i, u_j)$ and $(u_{i+1}, u_{j+1})$ by reversing the intermediate sequence. This eliminates route self-crossings and zigzag detours while strictly enforcing precedence rules, reducing fleet mileage by <strong>25% &ndash; 65%</strong> compared to naive FIFO routing.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- App Configuration & Logic -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
